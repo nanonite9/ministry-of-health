@@ -1,0 +1,377 @@
+connect to csdb
+
+   Database Connection Information
+
+ Database server        = DB2/LINUXX8664 10.5.3
+ SQL authorization ID   = **
+ Local database alias   = CSDB
+
+
+SELECT HName, City FROM Hospital WHERE AnnualBudget > 3000000 order by AnnualBudget desc
+
+HNAME                                                        CITY                                                        
+------------------------------------------------------------ ------------------------------------------------------------
+Toronto General Hospital                                     Toronto                                                     
+Toronto Western Hospital                                     Toronto                                                     
+McMaster University Medical Centre                           Hamilton                                                    
+Trillium Health Partners                                     Mississauga                                                 
+
+  4 record(s) selected.
+
+
+SELECT DISTINCT FirstName, LastName, Gender, DateOfBirth FROM Patient P, Person P1, Diagnose D WHERE D.PatientID = P.PatientID and Disease LIKE ('%Cancer%') and P1.ID = D.PatientID and P1.City = 'Toronto' and (P1.DateOfBirth >= current date - 40 years)
+
+FIRSTNAME                                                    LASTNAME                                                     GENDER                                                       DATEOFBIRTH
+------------------------------------------------------------ ------------------------------------------------------------ ------------------------------------------------------------ -----------
+Von                                                          Aprigliano                                                   F                                                            06/05/1983 
+Paulina                                                      Arand                                                        F                                                            09/24/2000 
+Elfriede                                                     Bakeley                                                      F                                                            02/09/1999 
+Leonor                                                       Beilinson                                                    M                                                            05/27/2014 
+Tesha                                                        Brang                                                        M                                                            02/06/1986 
+Tamera                                                       Crocker                                                      F                                                            08/02/1988 
+Shannan                                                      Cupit                                                        F                                                            09/22/2002 
+Thora                                                        Daneker                                                      M                                                            01/20/2004 
+Dorcas                                                       Diebold                                                      M                                                            01/20/2004 
+Bong                                                         Fears                                                        M                                                            02/08/1999 
+Essie                                                        Fitzke                                                       M                                                            04/04/1988 
+Maddie                                                       Foulds                                                       F                                                            09/24/2000 
+Sommer                                                       Frere                                                        M                                                            09/22/2002 
+Lottie                                                       Hegdahl                                                      M                                                            09/26/2008 
+Shelba                                                       Kast                                                         F                                                            05/22/2008 
+Hollis                                                       Keomuangtai                                                  F                                                            04/04/1988 
+Shawnee                                                      Kesten                                                       M                                                            01/22/2007 
+Shay                                                         Knieper                                                      M                                                            06/05/1983 
+Rodney                                                       Lockamy                                                      F                                                            05/20/2005 
+Percy                                                        Neelon                                                       M                                                            01/22/2007 
+Oliva                                                        Ramerez                                                      F                                                            06/01/1994 
+Melvin                                                       Rather                                                       M                                                            06/03/1995 
+Harris                                                       Sheck                                                        F                                                            09/26/2008 
+Yolande                                                      Staiano                                                      F                                                            02/09/1999 
+Margot                                                       Storrs                                                       M                                                            09/22/2002 
+Natalya                                                      Verso                                                        M                                                            01/25/2002 
+Terrilyn                                                     Waska                                                        M                                                            01/25/2002 
+Cherelle                                                     Welschmeyer                                                  F                                                            05/25/2001 
+Rochell                                                      Wetherby                                                     F                                                            09/20/2009 
+Amber                                                        Windell                                                      F                                                            05/20/2005 
+Carry                                                        Ziller                                                       M                                                            06/05/1983 
+
+  31 record(s) selected.
+
+
+SELECT AVG(Salary), Specialty FROM Physician GROUP BY Specialty
+
+1           SPECIALTY                                                                                           
+----------- ----------------------------------------------------------------------------------------------------
+     191764 General Surgery                                                                                     
+     180000 Ophthalmology                                                                                       
+     190000 Otolaryngology                                                                                      
+     140000 Radiology                                                                                           
+
+  4 record(s) selected.
+
+
+SELECT AVG(Salary), Specialty FROM (SELECT * FROM Physician P, Hospital H, Department D WHERE P.HName = H.HName and D.HName = H.HName and P.DName = D.DName and H.City IN ('Toronto', 'Hamilton')) GROUP BY Specialty HAVING COUNT(PhysicianID) >= 5
+
+1           SPECIALTY                                                                                           
+----------- ----------------------------------------------------------------------------------------------------
+     187307 General Surgery                                                                                     
+
+  1 record(s) selected.
+
+
+SELECT AVG(Salary), YearsOfPractice FROM Nurse GROUP BY YearsOfPractice ORDER BY YearsOfPractice
+
+1           YEARSOFPRACTICE
+----------- ---------------
+      60000               1
+      60000               2
+      80000               7
+      80000               8
+      80000               9
+     100000              10
+     100000              11
+     100000              12
+     104000              13
+     120000              14
+     120000              15
+     144000              17
+     150000              18
+     150000              21
+     150000              22
+     160000              24
+     160000              26
+     160000              28
+
+  18 record(s) selected.
+
+
+SELECT HName, COUNT(A.PatientID) AS PatientCount FROM Admission A WHERE A.date BETWEEN '08/05/2017' and '08/10/2017' GROUP BY HName
+
+HNAME                                                        PATIENTCOUNT
+------------------------------------------------------------ ------------
+McMaster University Medical Centre                                     29
+Toronto General Hospital                                               21
+Toronto Western Hospital                                               12
+Trillium Health Partners                                                9
+
+  4 record(s) selected.
+
+
+SELECT DName FROM Department GROUP BY DName HAVING COUNT(DName) = (SELECT COUNT(HName) FROM Hospital)
+
+DNAME                                                       
+------------------------------------------------------------
+General Surgery                                             
+Intensive Care Unit                                         
+Ophthalmology                                               
+Otolaryngology                                              
+Radiology                                                   
+
+  5 record(s) selected.
+
+
+SELECT D.HName, D.DName FROM Department D WHERE (D.HName, D.DName) in (SELECT NW.DName, P.DName FROM Nurse_Work NW, Physician P WHERE NW.HName = D.DName and NW.DName = P.DName GROUP BY NW.DName, P.DName HAVING count(NurseID + PhysicianID) >= ALL (SELECT count(NurseID + PhysicianID) FROM Nurse_Work NW, Physician P WHERE NW.HName = P.HName and NW.DName = P.DName GROUP BY NW.DName, P.DName ORDER BY count(NurseID + PhysicianID)))
+
+HNAME                                                        DNAME                                                       
+------------------------------------------------------------ ------------------------------------------------------------
+
+  0 record(s) selected.
+
+
+SELECT DName FROM Department D GROUP BY DName HAVING COUNT(DName) = 1
+
+DNAME                                                       
+------------------------------------------------------------
+Dermatology                                                 
+Neonatal ICU                                                
+Oncology and hematology                                     
+
+  3 record(s) selected.
+
+
+SELECT P1.LastName, P1.FirstName FROM Person P1, Nurse N, Patient P WHERE N.NurseID = P.NurseID and N.NurseID = P1.ID GROUP BY P1.FirstName, P1.LastName HAVING COUNT(P.PatientID) < 3 ORDER BY P1.LastName
+
+LASTNAME                                                     FIRSTNAME                                                   
+------------------------------------------------------------ ------------------------------------------------------------
+Colbath                                                      Georgiana                                                   
+Krivanec                                                     Adolph                                                      
+Lehn                                                         Rana                                                        
+Mackedanz                                                    Florinda                                                    
+Morgan                                                       Chi                                                         
+Mrkvicka                                                     Brinda                                                      
+Prothro                                                      Starr                                                       
+Rieg                                                         Ellsworth                                                   
+Swartzbeck                                                   Nadine                                                      
+Torchio                                                      Arlette                                                     
+
+  10 record(s) selected.
+
+
+SELECT DISTINCT P.PatientID, D.Prognosis, P.NurseID FROM Patient P, Diagnose D WHERE P.PatientID = D.PatientID and D.Prognosis = 'poor' and P.NurseID IN(SELECT N.NurseID FROM Nurse N, Patient P1 WHERE N.NurseID = P1.NurseID GROUP BY N.NurseID HAVING COUNT(N.NurseID) < 3)
+
+PATIENTID   PROGNOSIS                                                    NURSEID    
+----------- ------------------------------------------------------------ -----------
+   99610308 poor                                                            99644442
+   99648102 poor                                                            99644442
+   99661577 poor                                                            99662075
+
+  3 record(s) selected.
+
+
+SELECT date, count(date) as PatientCount FROM Admission WHERE HName = 'Hamilton General Hospital' GROUP BY date HAVING count(date) >= ALL (SELECT count(date) FROM Admission WHERE HName = 'Hamilton General Hospital' GROUP BY date)
+
+DATE       PATIENTCOUNT
+---------- ------------
+
+  0 record(s) selected.
+
+
+SELECT A.date, count(A.PatientID) FROM Admission A, Hospital H WHERE A.HName = 'Hamilton General Hospital' and A.HName = H.HName GROUP BY A.date ORDER BY count(A.PatientID) DESC FETCH FIRST 1 ROWS ONLY
+
+DATE       2          
+---------- -----------
+
+  0 record(s) selected.
+
+
+SELECT D.DrugCode, D.Name, COUNT(P.DrugCode), (COUNT(P.DrugCode) * D.UnitCost) as TotalSalesAmount FROM Drug D, Prescription P WHERE D.DrugCode = P.DrugCode GROUP BY D.DrugCode, D.Name, D.UnitCost ORDER BY COUNT(P.DrugCode) DESC FETCH FIRST 1 ROWS ONLY
+
+DRUGCODE             NAME                                                                                                 3           TOTALSALESAMOUNT
+-------------------- ---------------------------------------------------------------------------------------------------- ----------- ----------------
+drg_28850200         Phenytoin                                                                                                     39              117
+
+  1 record(s) selected.
+
+
+SELECT P1.ID, P1.FirstName, P1.LastName, P1.Gender FROM Person P1, Patient P, Diagnose D WHERE P1.ID = P.PatientID and P.PatientID = D.PatientID and D.Disease = 'Diabetes' and NOT EXISTS (SELECT P.PatientID FROM Patient P, Person P1, Take T, MedicalTest M WHERE P.PatientID = T.PatientID and T.TestID = M.TestID and P.PatientID = P1.ID and M.Name = '%Red Blood Cell%' and M.Name = '%Lymphocytes%')
+
+ID          FIRSTNAME                                                    LASTNAME                                                     GENDER                                                      
+----------- ------------------------------------------------------------ ------------------------------------------------------------ ------------------------------------------------------------
+   99619427 Brunilda                                                     Coin                                                         M                                                           
+   99642131 Shenika                                                      Tapian                                                       M                                                           
+   99632719 Corazon                                                      Ivaska                                                       F                                                           
+   99647589 Shoshana                                                     Courter                                                      F                                                           
+   99645166 Oneida                                                       Pospishil                                                    M                                                           
+   99642422 Slyvia                                                       Stockham                                                     F                                                           
+
+  6 record(s) selected.
+
+
+SELECT DISTINCT D.PhysicianID, D.Disease, D.Prognosis FROM Physician P, Diagnose D WHERE P.PhysicianID = D.PhysicianID and D.PhysicianID IN (SELECT P.PhysicianID FROM Physician P, Hospital H WHERE P.DName = 'Intensive Care Unit' and H.HNAME = 'McMaster University Medical Centre' and H.HName = P.HName)
+
+PHYSICIANID DISEASE                                                                                                                                                                                                  PROGNOSIS                                                   
+----------- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ------------------------------------------------------------
+   99653992 AIDS (Acquired Immunodeficiency Syndrome)                                                                                                                                                                good                                                        
+   99653992 Asthma                                                                                                                                                                                                   poor                                                        
+   99653992 Attention Deficit/Hyperactivity Disorder                                                                                                                                                                 excellent                                                   
+   99653992 CDI (Chronic Disease Indicators)                                                                                                                                                                         good                                                        
+   99653992 Cerebral Palsy                                                                                                                                                                                           very poor                                                   
+   99653992 Colorectal (Colon) Cancer                                                                                                                                                                                poor                                                        
+   99653992 Diabetes                                                                                                                                                                                                 excellent                                                   
+   99653992 Diet and Nutrition                                                                                                                                                                                       fair                                                        
+   99653992 Diphtheria [Corynebacterium diphtheriae�Infection]                                                                                                                                                       very poor                                                   
+   99653992 Diphyllobothrium�Infection [Diphyllobothriasis]                                                                                                                                                          good                                                        
+   99653992 Enteric Diseases from Animals                                                                                                                                                                            good                                                        
+   99653992 Enterovirus D68                                                                                                                                                                                          poor                                                        
+   99653992 Epidemic Typhus                                                                                                                                                                                          excellent                                                   
+   99653992 Fragile X Syndrome (FXS)                                                                                                                                                                                 fair                                                        
+
+  14 record(s) selected.
+
+
+SELECT P.PatientID, sum(M.Fee) FROM Patient P, MedicalTest M, Take T WHERE P.PatientID = T.PatientID and M.TestID = T.TestID and P.PatientID IN (SELECT D.PatientID FROM Physician P, Diagnose D WHERE P.PhysicianID = D.PhysicianID and D.PhysicianID in (SELECT P.PhysicianID FROM Physician P, Hospital H WHERE P.DName = 'Intensive Care Unit' and H.HNAME = 'McMaster University Medical Centre' and H.HName = P.HName) ) GROUP BY (P.PatientID)
+
+PATIENTID   2                                
+----------- ---------------------------------
+   99627956                            310.00
+   99642131                            550.00
+   99665378                            430.00
+
+  3 record(s) selected.
+
+
+SELECT P.PatientID, sum(D.UnitCost) FROM Patient P, Prescription Pr, Drug D WHERE P.PatientID = Pr.PatientID and Pr.DrugCode = D.DrugCode and P.PatientID IN (SELECT D.PatientID FROM Physician P, Diagnose D WHERE P.PhysicianID = D.PhysicianID and D.PhysicianID in (SELECT P.PhysicianID FROM Physician P, Hospital H WHERE P.DName = 'Intensive Care Unit' and H.HNAME = 'McMaster University Medical Centre' and H.HName = P.HName)) GROUP BY (P.PatientID)
+
+PATIENTID   2          
+----------- -----------
+   99615376         153
+   99618797          10
+   99620783         345
+   99621221          20
+   99627956         407
+   99642131         670
+   99642157         331
+   99655482          20
+   99664061         200
+   99665378        1578
+
+  10 record(s) selected.
+
+
+SELECT P1.ID, P1.FirstName, P1.LastName FROM Person P1, Admission A WHERE P1.ID = A.PatientID and A.Category IN ('urgent', 'standard') GROUP BY P1.ID, P1.FirstName, P1.LastName, A.HName, A.Category HAVING COUNT(A.HNAME) = 2
+
+ID          FIRSTNAME                                                    LASTNAME                                                    
+----------- ------------------------------------------------------------ ------------------------------------------------------------
+   99610308 Bernadine                                                    Shufelt                                                     
+   99611060 Melvin                                                       Rather                                                      
+   99611074 Lavelle                                                      Lillywhite                                                  
+   99612267 Shasta                                                       Canonico                                                    
+   99612305 Tawanna                                                      Kuamoo                                                      
+   99613091 Wilson                                                       Nickelson                                                   
+   99614409 Edmond                                                       Buettner                                                    
+   99615237 Paola                                                        Perkins                                                     
+   99615376 Trevor                                                       Harnist                                                     
+   99616277 Shakira                                                      Westervelt                                                  
+   99618774 Timothy                                                      Bussert                                                     
+   99618866 Stefanie                                                     Prinkey                                                     
+   99619113 Desirae                                                      Oien                                                        
+   99619939 Bev                                                          Dermo                                                       
+   99620124 Marshall                                                     Fitgerald                                                   
+   99620882 Shelton                                                      Spannuth                                                    
+   99621332 Nan                                                          Weekly                                                      
+   99622055 Louvenia                                                     Abney                                                       
+   99622397 Ryan                                                         Phibbs                                                      
+   99623141 Joaquin                                                      Geitner                                                     
+   99623419 Annamaria                                                    Vanhuss                                                     
+   99623422 Hana                                                         Meisel                                                      
+   99624334 Dorothea                                                     Lowther                                                     
+   99624716 Dion                                                         Lamastus                                                    
+   99625615 Tayna                                                        Sine                                                        
+   99626170 Hassie                                                       Sarkin                                                      
+   99627287 Shelba                                                       Kast                                                        
+   99628800 Jules                                                        Erichsen                                                    
+   99629373 Stephanie                                                    Rolling                                                     
+   99629669 Toi                                                          Rollison                                                    
+   99629779 Leslee                                                       Matsuno                                                     
+   99631138 Kelvin                                                       Hasha                                                       
+   99632402 Sommer                                                       Frere                                                       
+   99633214 Matt                                                         Nickolich                                                   
+   99634002 Aileen                                                       Klukken                                                     
+   99635163 Jesse                                                        Wida                                                        
+   99636025 Latonia                                                      Helander                                                    
+   99636946 Sherly                                                       Vitrano                                                     
+   99638299 Jeannine                                                     Rippy                                                       
+   99639233 Noble                                                        Miyata                                                      
+   99639491 Nobuko                                                       Logwood                                                     
+   99639966 Daniel                                                       Dobler                                                      
+   99640613 Verona                                                       Jobst                                                       
+   99640670 Nydia                                                        Ancar                                                       
+   99640787 Ruby                                                         Sensibaugh                                                  
+   99641166 Shala                                                        Ogle                                                        
+   99641181 Yong                                                         Yestramski                                                  
+   99641334 Angelyn                                                      Wieand                                                      
+   99642422 Slyvia                                                       Stockham                                                    
+   99643150 Ming                                                         Eskew                                                       
+   99643350 Malcom                                                       Vereen                                                      
+   99643369 Aron                                                         Leuthold                                                    
+   99643428 Amie                                                         Okuniewski                                                  
+   99644839 Sabine                                                       Kaea                                                        
+   99645166 Oneida                                                       Pospishil                                                   
+   99645381 Rene                                                         Granier                                                     
+   99645846 Malissa                                                      Talty                                                       
+   99645924 Shad                                                         Reider                                                      
+   99647155 Buck                                                         Kotow                                                       
+   99647546 Tequila                                                      Pelletier                                                   
+   99648102 Maricela                                                     Conger                                                      
+   99648249 Nguyet                                                       Kitchens                                                    
+   99648402 Nakisha                                                      Russi                                                       
+   99648570 Zoila                                                        Lannigan                                                    
+   99650187 Dolores                                                      Moltz                                                       
+   99650205 Caren                                                        Doscher                                                     
+   99650614 Bulah                                                        Berkoff                                                     
+   99650801 Lawanda                                                      Jacocks                                                     
+   99651536 Myra                                                         Palenik                                                     
+   99652373 Denna                                                        Miklitz                                                     
+   99654086 Irene                                                        Benauides                                                   
+   99654264 Kenia                                                        Sharples                                                    
+   99654361 Kathrine                                                     Kaper                                                       
+   99654491 Billi                                                        Kazar                                                       
+   99655048 Herminia                                                     Penso                                                       
+   99655278 Romana                                                       Riesgraf                                                    
+   99655482 Lucille                                                      Hubbell                                                     
+   99655646 Giovanna                                                     Bacho                                                       
+   99656154 Denny                                                        Zeanah                                                      
+   99656170 Tamera                                                       Crocker                                                     
+   99656171 Janae                                                        Mair                                                        
+   99656674 Ranee                                                        Maye                                                        
+   99656778 Lashaun                                                      Casteneda                                                   
+   99658409 Claudio                                                      Hummell                                                     
+   99658703 Sherell                                                      Despain                                                     
+   99658811 Ilda                                                         Schuring                                                    
+   99659163 Ellen                                                        Fajen                                                       
+   99659704 Colton                                                       Pesqueira                                                   
+   99659862 Gretchen                                                     Mckeon                                                      
+   99660060 Cletus                                                       Stapels                                                     
+   99661299 Asha                                                         Zoldak                                                      
+   99661988 Viola                                                        Eddens                                                      
+   99662039 King                                                         Suman                                                       
+   99662272 Esteban                                                      Plantenberg                                                 
+   99662586 Delsie                                                       Cerao                                                       
+   99664108 Adria                                                        Gilliam                                                     
+   99664504 Dorcas                                                       Diebold                                                     
+   99664554 Jacinta                                                      Deppen                                                      
+   99664641 Ollie                                                        Oliverson                                                   
+   99666188 Trinidad                                                     Bredernitz                                                  
+
+  100 record(s) selected.
+
